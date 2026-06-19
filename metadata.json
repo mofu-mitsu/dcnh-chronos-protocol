@@ -1,0 +1,6 @@
+{
+  "name": "DCNH Subtype Diagnosis",
+  "description": "An interactive, gamified DCNH subtype diagnosis tool featuring Darling-chan (ILI) and LSI Caterpillar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,126 @@
+###################################################################
+#   みつきのための DCNH精密精神診断 Google Apps Script (GAS) 連携手順
+###################################################################
+
+このファイルでは、診断を受けたユーザーの結果やログを
+「Google スプレッドシート」へ自動でリアルタイム集計するための手順と、
+設定用プログラムコード（Google Apps Script）を記述しています。
+
+これを使うと、他の人が診断を終えた瞬間にスプレッドシートに
+「日付」「ニックネーム」「結果タイプ」「ロボット構造」「タップ履歴ログ」などが一瞬で記録されます！
+
+-------------------------------------------------------------------
+■ STEP 1: Google スプレッドシートの作成
+-------------------------------------------------------------------
+1. Google ドライブで「新規」＞「Google スプレッドシート」を作成します。
+2. シート名は「DCNH診断ログ」など任意のもので構いません。
+3. 最初のシート（Sheet1）を開いた状態のままにしておきます。
+   ※ 列ヘッダー（1行目の見出し項目）は、システムが自動的に書き込みますので、空のままでOKです。
+
+-------------------------------------------------------------------
+■ STEP 2: Apps Script エディタの起動とコード貼り付け
+-------------------------------------------------------------------
+1. スプレッドシートの上部メニューの「拡張機能」から「Apps Script」をクリックします。
+2. エディタが起動したら、もともと書かれている「function myFunction() {}」をすべて消去します。
+3. 下記の【GAS ソースコード】をまるごとコピーして貼り付けます。
+
+【GAS ソースコード】
+-------------------------------------------------------------------
+function doPost(e) {
+  var headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  
+  try {
+    var params = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // シートにデータが一切ない(ヘッダーもない)場合は見出しを自動作成
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "判定年月日",
+        "被験者名",
+        "測定主タイプ",
+        "サブタイプ",
+        "自認ソシオタイプ",
+        "D(ドミナント)得点",
+        "C(クリエイター)得点",
+        "N(ノーマライザー)得点",
+        "H(ハーモナイザー)得点",
+        "自律ロボット構成",
+        "時空脳内監査アクションログ"
+      ]);
+    }
+    
+    // タイムスタンプの取得
+    var nowStr = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
+    
+    // データを最終行に追加
+    sheet.appendRow([
+      nowStr,
+      params.username || "非公開(Anonymous)",
+      params.mainType || "",
+      params.subType || "",
+      params.selfType || "なし",
+      Number(params.scoreD) || 0,
+      Number(params.scoreC) || 0,
+      Number(params.scoreN) || 0,
+      Number(params.scoreH) || 0,
+      params.robot || "未構成",
+      params.logs || ""
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Successfully synched." }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+      
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+  }
+}
+
+// CORSプリフライト（OPTIONSメソッド対応）
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With",
+      "Access-Control-Max-Age": "86400"
+    });
+}
+-------------------------------------------------------------------
+
+4. ファイルを保存（フロッピーアイコン 💾 または WindowsならCtrl+S / MacならCmd+S）します。
+
+-------------------------------------------------------------------
+■ STEP 3: Web App としてデプロイ
+-------------------------------------------------------------------
+1. 画面右上の「デプロイ」ボタン ＞「新規デプロイ」をクリックします。
+2. 種類の選択（歯車アイコン）から「ウェブアプリ」を選択します。
+3. 設定を以下のように調整します：
+   - 説明: 「DCNHログ WebApp」など
+   - 次のユーザーとして実行: 「自分」（あなたのアカウント）
+   - アクセスできるユーザー: 「全員」（※必ず重要です。診断者全員がデータを送信できるよう「全員(Anyone)」にしてください）
+4. 「デプロイ」ボタンをクリックします。
+   ※ 初回はGoogleによる権限承認を求められます。
+     - 「アクセスを承認」をクリック。
+     - アカウントを選択。
+     - 「Advanced（詳細）」 ＞ 「Go to ... (unsafe)（... に移動）」をクリックして承認を完了します。
+5. デプロイ完了画面に表示される「ウェブアプリの URL」をコピーします。
+   （例：https://script.google.com/macros/s/XXXXX/exec）
+
+-------------------------------------------------------------------
+■ STEP 4: アプリの画面でデプロイしたURLを設定する！
+-------------------------------------------------------------------
+1. このアプリの「診断結果画面」の下部にある「Google スプレッドシート連携（GAS）」フォームを開きます。
+2. コピーした上記の「ウェブアプリの URL」をペーストして「URLを保存」を押します。
+   （URLはブラウザ（localStorage）に安全に記憶されます）。
+3. これだけで設定完了！
+   あとは診断結果が出たとき、画面から「スプレッドシートにデータ送信」ボタンをポチッと押すだけで、
+   瞬時にあなたのGoogleスプレッドシートに、その人の履歴が綺麗に書き込まれます！(  ˙꒳˙ )

@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Patrick+Hand&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Zen Maru Gothic", "Patrick Hand", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* 用紙の風合いを出すペーパーテクスチャ（擬似背景グレイン） */
+.paper-bg {
+  background-color: #fcfbf7; /* 温かみのあるオフホワイト */
+  background-image: 
+    radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  color: #33322e; /* 柔らかい炭色 */
+}
+
+/* 用紙を切り裂いたようなラフなエッジや、手本のような罫線 */
+.notebook-ruled {
+  background-image: linear-gradient(#e5e2d9 1px, transparent 1px);
+  background-size: 100% 2rem;
+  line-height:  2rem;
+}
+
+/* 水滴がパチャン…と広がる美しい波紋エフェクト（Ripple） */
+@keyframes water-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: absolute;
+  border: 2px solid rgba(16, 185, 129, 0.4); /* 爽快な水のエメラルド色 */
+  border-radius: 50%;
+  animation: water-ripple 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* つぶつぶの影や、ノートに書いたインクの染み込み風の微細な文字トーン */
+.handwritten-ink {
+  color: #1e293b;
+  text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.1);
+}
+
+.handwritten-blue {
+  color: #0f172a;
+}
+
+/* カスタムスクロールバー（LINE風＆ノート風） */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 激しすぎない振動（見やすさ優先） */
+@keyframes subtle-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.animate-subtle-shake {
+  animation: subtle-shake 0.3s ease-in-out infinite;
+}
