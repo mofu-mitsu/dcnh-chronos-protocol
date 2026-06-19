@@ -219,7 +219,7 @@ export default function ResultView({
     }
 
     // デフォルトフォールバック
-    return `【複合共振モデル】${type}の論理的な世界線に、測定サブタイプ『${RESULT_PROFILES[main as 'D'|'C'|'N'|'H'].name}』および第2気質『${RESULT_PROFILES[sub as 'D'|'C'|'N'|'H'].name}』を検知しました。客観的な分析力とサブタイプのユニークな資質が重なり合い、独自のシステム適応と高度な課題解決アプローチをもたらします。`;
+    return `【複合共振モデル】${type}が紡ぐ固有の世界線に、測定サブタイプ『${RESULT_PROFILES[main as 'D'|'C'|'N'|'H'].name}』および第2気質『${RESULT_PROFILES[sub as 'D'|'C'|'N'|'H'].name}』が交差・検知されました。タイプ本来の魅力的な資質とサブタイプのユニークな気質が美しく響き合い、あなたならではの個性的な日常適応と、多次元的なアプローチをもたらします。`;
   };
 
   const totalPoints = score.D + score.C + score.N + score.H || 1;
