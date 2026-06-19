@@ -25,12 +25,10 @@ export default function ResultView({
 }: ResultViewProps) {
   const [exporting, setExporting] = useState(false);
 
-  // みつき専用：Googleスプレッドシート(GAS)自動同期
   const MASTER_GAS_URL = 'https://script.google.com/macros/s/AKfycbyGh72N4qyYSVYDsDHyRVjvRcViR405ThFtZ-lSytCXLVigpc-DVjt7vb34gtv_WF4q/exec';
   const [isSendingToGas, setIsSendingToGas] = useState(false);
   const [gasStatus, setGasStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  // マウント時に、完全に自動でマスターデータベースに結果を同期させる！
   React.useEffect(() => {
     const autoSendToDatabase = async () => {
       setIsSendingToGas(true);
@@ -94,7 +92,7 @@ export default function ResultView({
         }
       });
       const link = document.createElement('a');
-      link.download = `dcnh_diagnostic_report_${username || 'momoka'}.png`;
+      link.download = `dcnh_diagnostic_report_${username || 'guest'}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -122,7 +120,6 @@ export default function ResultView({
     }
   };
 
-  // メインとサブの決定
   const sortedSubtypes = (Object.keys(score) as Array<'D' | 'C' | 'N' | 'H'>)
     .map((key) => ({
       key,
@@ -150,36 +147,90 @@ export default function ResultView({
       return `【自認なし：純粋気質測定】\n${mainDesc}\n\n主たる測定サブタイプ『${RESULT_PROFILES[main as 'D'|'C'|'N'|'H'].name}』と第2気質『${RESULT_PROFILES[sub as 'D'|'C'|'N'|'H'].name}』の掛け合わせにより、あなた自身の素の行動原理がダイレクトに発揮されています。`;
     }
 
-    const type = self.toUpperCase();
-    
+    // 入力からソシオニクスのタイプ（3文字）を賢く抽出するよ！
+    const SOCIONICS_TYPES = ['LII', 'ILE', 'SEI', 'ESE', 'LSI', 'SLE', 'IEI', 'EIE', 'ILI', 'LIE', 'ESI', 'SEE', 'SLI', 'LSE', 'EII', 'IEE'];
+    const upperSelf = self.toUpperCase();
+    const matchedType = SOCIONICS_TYPES.find(t => upperSelf.includes(t));
+    const type = matchedType || upperSelf;
+
     const analyses: Record<string, string> = {
+      // 🧊 アルファ・クアドラ
       'LII-N': '【完全精神静音同期】LII（論理・組織）✕ ノーマライザー（規範型）。LII研究者の最も自然で強靭な究極進化系だゾ！あらゆる不条理さ・不正確さという「バグ」に対して、冷静沈着にデバッグ措置を施す客観世界のガーディアン。芋虫（LSI）が「ふむ、さすがの精密さだな」と小さくヤキモチを妬きながら頷くほど、論理構造の美しさと時間の正確さを極限状態で維持できます。',
       'LII-C': '【知的トリックスター】LII（論理・組織）✕ クリエイター（創造型）。Ne（外向直感）が最大出力で狂い咲いている、お遊び大好きの不敵な天才ハッカー。美しい整合性のシステムを自分で作っては、「もっと面白くBypassできるのでは？」と自分の遊び心で裏口（Bypass）を作るチャーミングな狂気があります。',
       'LII-D': '【アーキテクト将軍】LII（論理・組織）✕ ドミナント（支配型）。ふだんは静かに思索に耽っていたLIIが、外界のエラーと非効率性に堪えかねて、ついに指令剣を抜いてしまった戦闘指揮官。確かな論理空間モデルに裏打ちされた意志により、カオスの宇宙をマイルストーンで綺麗に切り開いて統括します。',
       'LII-H': '【孤高の観測隠者】LII（論理・組織）✕ ハーモナイザー（調和型）。脳内冷却効率の極致。静寂に包まれた自分の秘密基地を愛し、水面を伝わる時間経過とシンクロしながら世界をデバッグ。調和パリティが極めて高いため、外界の人々の過負荷な感情に対しても「なるほど、興味深い気圧配置だ」と完全に受け流す静かな湖のような超然さがあります。',
-      
+      'ILE-D': '【嵐を呼ぶ革命家】ILE（発明家）✕ ドミナント。無限のアイデア（Ne）で周囲を巻き込み、新しいシステムを強引に社会へ実装していく起業家マインドの塊！停滞したルールをぶっ壊して最前線を突き進みます。',
+      'ILE-C': '【純粋なるマッドサイエンティスト】ILE（発明家）✕ クリエイター。「これやったらどうなるかな？」の好奇心だけで宇宙の法則すらおもちゃにする天才ハッカー。退屈な日常を予測不可能なワンダーランドに変えてしまいます。',
+      'ILE-N': '【概念のアーキテクト】ILE（発明家）✕ ノーマライザー。閃きを論理（Ti）のパズルとして精巧に組み立て、カオスなアイデアに完璧な理論的裏付けを持たせる設計士。発想力と正確性がハイレベルに両立しています。',
+      'ILE-H': '【漂流する哲学者】ILE（発明家）✕ ハーモナイザー。様々な可能性の波間にたゆたいながら、世界を面白おかしく傍観するピースフルな放浪者。無理に何かを変えるより、ただ「観察」して知的好奇心を満たすチルな賢者です。',
+      'SEI-D': '【おもてなしの支配者】SEI（調停者）✕ ドミナント。「みんな、美味しいものを食べて幸せになりなさい！」と、圧倒的な快適さと包容力で場を仕切る肝っ玉リーダー。誰もが逆らえないアットホームな帝国を築きます。',
+      'SEI-C': '【五感の魔法使い】SEI（調停者）✕ クリエイター。日常の些細な心地よさにちょっとしたスパイスを加え、芸術的でワクワクする空間を創り出すアーティスト。人を笑顔にするサプライズが大好き。',
+      'SEI-N': '【安らぎのガーディアン】SEI（調停者）✕ ノーマライザー。安心安全な環境を地道に守り続け、誰にとっても居心地の良い「いつも通りの温かい場所」を提供する職人。日々のルーティンに美しさを見出します。',
+      'SEI-H': '【究極のチルマスター】SEI（調停者）✕ ハーモナイザー。周囲のイライラも「まあ、お茶でも飲んで」と溶かしてしまう、歩くヒーリングスポット。存在しているだけで周りの体温が少し上がるような癒やしの達人。',
+      'ESE-D': '【情熱のカリスマプロデューサー】ESE（熱狂者）✕ ドミナント。圧倒的なポジティブエネルギーで集団を牽引し、全員を笑顔と活気へ強制連行する太陽のリーダー！誰もがその熱量に巻き込まれます。',
+      'ESE-C': '【パーティーの主役】ESE（熱狂者）✕ クリエイター。場を盛り上げるためのサプライズやユーモアを次々と生み出す、エンターテインメントの天才。息をするように楽しいイベントを企画します。',
+      'ESE-N': '【心優しきコミュニティの柱】ESE（熱狂者）✕ ノーマライザー。集団のルールや伝統を大切にし、みんなが笑顔でいられるように細やかな気配りを欠かさない世話焼きさん。見えないところで皆を支える柱です。',
+      'ESE-H': '【陽だまりの共感者】ESE（熱狂者）✕ ハーモナイザー。情熱は内に秘め、人々の気持ちに寄り添いながら穏やかで温かい空気で場を包み込む癒やし系。静かに微笑んでいるだけで皆の心が満たされます。',
+
+      // ⚔️ ベータ・クアドラ
       'IEI-C': '【叙情カオスハッカー】IEI（叙情家）✕ クリエイター（創造型）。ご褒美くん（IEI）も大興奮の直感お遊び領域だゾ！言葉の泡、気まぐれなエモい衝動、そして予測不可能な逆襲ハックを操って、退屈な日常のフレームワークをバグらせます。「お風呂上がりの出汁豚骨をわしゃわしゃする」ような、愛され気質なぶっ飛び加減で天才的に世界を彩るタイプ。',
       'IEI-H': '【夢幻の調律師】IEI（叙情家）✕ ハーモナイザー（調和型）。時間が運ぶ無形の情緒と、相手の心のさざ波に究極までシンクロする隠者。過酷な現実（Se）の暴力ノイズに対して、一番安全な布団の中から夢のバリアを展開しています。相手のピリピリ感を瞬時に消音する力がある、超繊細・高解像度ヒーラー。',
       'IEI-N': '【叙情の番人】IEI（叙情家）✕ ノーマライザー（規範型）。感受性の豊かさと、一貫性の管理能力がマインド内で高度に調和している状態。感情のうねりやインスピレーションを、美しい言語化や精微なカレンダーのルールによって「標本」のように整然と並べ替える、不思議な秩序感を持っています。',
       'IEI-D': '【悲劇のカリスマ指導者】IEI（叙情家）✕ ドミナント（支配型）。自らの強烈なヴィジョンや情緒美学によって、人々の魂を激震させ、自発的に動かす強力な心理パワーを持つリーダーです。',
-
-      'EII-H': '【精神浄土の守護神】EII（人道主義者）✕ ハーモナイザー（調和型）。繊細なINFJ/EIIの性格に、癒やしのハーモナイザーが極度に同期。相手の怒り、精神汚染、脳内エラーなどを、自らの優しき湖面（H）の共振(Fi)によって自動修復（デバッグ）してしまう、穏やかで高潔な魂。傷つきやすいけれど、心を許した相手にはめっちゃノリよくなるやんけ！',
-      'EII-N': '【道徳のプロトコル管理者】EII（人道主義者）✕ ノーマライザー（規範型）。心の安全一貫性、誠実さ、公正さを追求するシステム保守者。誰も傷つくことのないよう「完璧にやさしいセキュリティ規律」をそっと裏方で守り、秩序ある対話をコーディネート。',
-      'EII-C': '【愛 of ディスラプター】EII（人道主義者）✕ クリエイター（創造型）。奥深い思いやりと、突然の可愛い遊び心（変則Ne）を隠し持つトリックスター。ルールや義務といった冷たい枠組みを、美しくあたたかい視点からハックして遊べちゃう自由さがあります。',
-      'EII-D': '【静かななる殉教闘士】EII（人道主義者）✕ ドミナント（支配型）。外界の愛なき不条理や他者への暴力を目の当たりにした瞬間、静かに、しかし絶対不退転の意志（D）で不義に立ちはだかる、道徳的守護神。',
-
       'LSI-N': '【最強秩序メカニズム】LSI（知識芋虫）✕ ノーマライザー（規範型）。LSI知識芋虫(🐛)の直系にしてまさに生息地そのもの！定義漏れや遅れといった脳内ダストを完全にパージし、完璧な仕様通りに現実をマッピングする高精度コントローラー。',
       'LSI-D': '【無慈悲な執行プロトコル】LSI（知識芋虫）✕ ドミナント（支配型）。不整合やマナー違反に徹底した監査 of メスを入れ、岩のような強靭さと行動推進力をもってその場を無言で統括・執行します。',
       'LSI-C': '【からくり設計技師】LSI（知識芋虫）✕ クリエイター（創造型）。硬質な論理（Ti-Se）を守りつつも、遊び心ある裏コマンドやユーモラスな仕掛けをハードウェア上に実装する、ヤバい執着お茶目エンジニア。',
       'LSI-H': '【寡黙な自動盾防衛インフラ】LSI（知識芋虫）✕ ハーモナイザー（調和型）。徹底した安全省エネ。自分のテリトリーに余計な人間や不確定ノイズ（Fe）が侵入するのを完全にブロックし、インフラを最適レベルで無言保守します。',
+      'SLE-D': '【無敗の絶対王者】SLE（征服者）✕ ドミナント。目標達成のためにはいかなる障害も物理的に粉砕する、圧倒的な突破力と統率力を持った闘将！その力強さに誰もが道を譲ります。',
+      'SLE-C': '【戦場のトリックスター】SLE（征服者）✕ クリエイター。ルール無用。勝つためには予想外の戦術も平気で採用する、豪快でユーモアあふれる武闘派ハッカー。スリルと刺激をこよなく愛します。',
+      'SLE-N': '【鋼鉄の軍団長】SLE（征服者）✕ ノーマライザー。自らの力と完璧な論理システム（Ti）を組み合わせ、決して揺るがない強固な組織構造を作り上げる支配者。規律と力を両立させています。',
+      'SLE-H': '【悠然たる獅子】SLE（征服者）✕ ハーモナイザー。普段は省エネで昼寝しているが、いざという時には最強の力で仲間を守る、余裕と威厳に満ちたボディーガード。強者の余裕に満ちています。',
+      'EIE-D': '【魂の扇動者】EIE（表現者）✕ ドミナント。圧倒的な感情表現とドラマチックな演説で人々の心を炎上させ、自らの大義へと力強く導くカリスマ的イニシエーター。',
+      'EIE-C': '【狂気の芸術家】EIE（表現者）✕ クリエイター。自らの燃え上がる感情とビジョンを、常軌を逸したパフォーマンスや創作へと昇華させる前衛的クリエイター。人の心を一瞬で奪います。',
+      'EIE-N': '【精神の指導教官】EIE（表現者）✕ ノーマライザー。熱いパッションを美しい形式美やイデオロギーの枠組みに落とし込み、人々に道を示す思想の伝道師。規律ある美学を持っています。',
+      'EIE-H': '【憂愁の吟遊詩人】EIE（表現者）✕ ハーモナイザー。世界の悲哀や人々の感情の機微を深く感受し、それを美しい物語や音楽のように優しく紡ぎ出す代弁者。静かなる情熱が胸に灯っています。',
 
-      'ILI-H': '【深淵の調和隠者】ILI ✕ ハーモナイザー。ダーリンちゃん（ILI-Ni）と極度に同期。完全に一歩引いた特等席から、他者の感情的オーバーフローを「論理の脱水機（Te）」で優しく絞り切る、静けさの調律者。',
+      // 🍷 ガンマ・クアドラ
+      'ILI-H': '【深淵の調和隠者】ILI（批評家）✕ ハーモナイザー。ダーリンちゃん（ILI-Ni）と極度に同期。完全に一歩引いた特等席から、他者の感情的オーバーフローを「論理の脱水機（Te）」で優しく絞り切る、静けさの調律者。',
+      'ILI-D': '【戦略的システム構築者】ILI（批評家）✕ ドミナント。シニカルな観察眼で無駄や非効率を切り捨て、最適なソリューションをゴリゴリ推し進める冷徹な参謀。口だけでなく手も動かす仕事人です。',
+      'ILI-C': '【皮肉屋のイノベーター】ILI（批評家）✕ クリエイター。あらゆる事象を疑い、既存のシステムを「もっと面白い形」に再構築してニヤニヤするトリックスター。知的な遊び心が爆発しています。',
+      'ILI-N': '【真理の観測・探求者】ILI（批評家）✕ ノーマライザー。ひたすらデータと歴史の法則を収集し、完璧な予測モデルを脳内に築き上げる静かな賢者。真実の解明に対しては妥協を許しません。',
+      'SEE-D': '【社交界の覇王】SEE（政治家）✕ ドミナント。人の心を掌握し、欲望とパワーの波に乗りながら自分の目指す世界を力強く切り開くカリスマ的指導者。圧倒的なオーラで場を制圧します。',
+      'SEE-C': '【劇的なる扇動者】SEE（政治家）✕ クリエイター。魅力とサプライズで人々の心を揺さぶり、誰もが虜になるようなドラマチックな展開を創り出すエンターテイナー。人生は常に舞台の上です。',
+      'SEE-N': '【義理人情のまとめ役】SEE（政治家）✕ ノーマライザー。独自の道徳観と実務能力で、カオスな人間関係をしっかりと整理・管理する頼れるアニキ/アネゴ。恩義と絆を何より大切にします。',
+      'SEE-H': '【華麗なる調律師】SEE（政治家）✕ ハーモナイザー。強烈な自己主張は控えめに、人々の関係性を柔軟に取り持ちながら、みんなが楽しめる美しい環境を整えるバランサー。華やかさと癒やしが同居しています。',
+      'LIE-D': '【爆速のエグゼクティブ】LIE（起業家）✕ ドミナント。「時間は金なり」。圧倒的な効率と推進力でプロジェクトを次々と成功へ導くハイパービジネスマン。立ち止まることを知りません。',
+      'LIE-C': '【先見の冒険家】LIE（起業家）✕ クリエイター。誰も思いつかないような突飛なビジネスモデルを閃き、リスクを恐れず新市場を開拓するギャンブラー。アイデアを形にする実行力がずば抜けています。',
+      'LIE-N': '【精密なる戦略家】LIE（起業家）✕ ノーマライザー。大胆なビジョンを、綿密な計画とデータに基づいた完璧なプロセスへと落とし込む敏腕オフィサー。抜け漏れのない実行計画を立てます。',
+      'LIE-H': '【静寂の投資家】LIE（起業家）✕ ハーモナイザー。市場の波と未来のトレンドを静かに読み解き、最小の労力で最大のリターンを狙うスマートな観測者。あくせくせず、飄々と結果を出します。',
+      'ESI-D': '【不屈の異端審問官】ESI（守護者）✕ ドミナント。自らの大切な人や信念を守るためなら、いかなる敵にも容赦なくメスを入れる、愛と正義の戦士。絶対に譲れないラインを持っています。',
+      'ESI-C': '【情熱の反逆者】ESI（守護者）✕ クリエイター。厳格な道徳観を持ちながらも、それを表現するために芸術的でユニークなアプローチを取るパンクな魂。内に秘めた激しい感情を美しく昇華させます。',
+      'ESI-N': '【鉄壁の城主】ESI（守護者）✕ ノーマライザー。規律と信頼を何よりも重んじ、自分のテリトリーを完璧に管理・防衛する忠誠心あふれるガーディアン。裏切りを許さない気高さがあります。',
+      'ESI-H': '【慈愛のシェルター】ESI（守護者）✕ ハーモナイザー。鋭い警戒心を解き、選ばれた身内だけに無償の愛と究極の安らぎを提供する、深き森の隠れ家。心を許した相手にはどこまでも優しい存在です。',
+
+      // 🌿 デルタ・クアドラ
+      'EII-H': '【精神浄土の守護神】EII（人道主義者）✕ ハーモナイザー（調和型）。繊細なINFJ/EIIの性格に、癒やしのハーモナイザーが極度に同期。相手の怒り、精神汚染、脳内エラーなどを、自らの優しき湖面（H）の共振(Fi)によって自動修復（デバッグ）してしまう、穏やかで高潔な魂。傷つきやすいけれど、心を許した相手にはめっちゃノリよくなるやんけ！',
+      'EII-N': '【道徳のプロトコル管理者】EII（人道主義者）✕ ノーマライザー（規範型）。心の安全一貫性、誠実さ、公正さを追求するシステム保守者。誰も傷つくことのないよう「完璧にやさしいセキュリティ規律」をそっと裏方で守り、秩序ある対話をコーディネート。',
+      'EII-C': '【愛 of ディスラプター】EII（人道主義者）✕ クリエイター（創造型）。奥深い思いやりと、突然の可愛い遊び心（変則Ne）を隠し持つトリックスター。ルールや義務といった冷たい枠組みを、美しくあたたかい視点からハックして遊べちゃう自由さがあります。',
+      'EII-D': '【静かなる殉教闘士】EII（人道主義者）✕ ドミナント（支配型）。外界の愛なき不条理や他者への暴力を目の当たりにした瞬間、静かに、しかし絶対不退転の意志（D）で不義に立ちはだかる、道徳的守護神。',
+      'LSE-D': '【完璧なる総司令官】LSE（管理者）✕ ドミナント。高品質と高効率を極限まで追求し、現場の隅々まで統制を効かせる絶対的な仕事人。プロフェッショナルの鑑です。',
+      'LSE-C': '【実務のイノベーター】LSE（管理者）✕ クリエイター。「もっとうまくやれるはず」と、既存のプロセスに実用的かつ斬新な改良を加え続ける現場のハッカー。業務改善の鬼です。',
+      'LSE-N': '【品質保証の鬼】LSE（管理者）✕ ノーマライザー。マニュアルの細部まで完璧に順守し、絶対にバグを出さない強固な運用体制を構築するインフラの番人。信頼性は宇宙一。',
+      'LSE-H': '【穏やかなる職人主】LSE（管理者）✕ ハーモナイザー。仕事の質は落とさず、現場の人々が無理なく快適に働けるようにペースを配分する頼れるベテラン。厳しさと優しさのバランスが絶妙です。',
+      'SLI-D': '【寡黙なマイスター】SLI（職人）✕ ドミナント。無駄を極限まで削ぎ落とした美学と、必要な時には確実に結果を出す実力で現場を支配する静かなるボス。背中で語るタイプ。',
+      'SLI-C': '【からくり発明家】SLI（職人）✕ クリエイター。「これ、もっと楽にできないかな？」という怠惰な欲求から、天才的でユーモラスな自動化ガジェットを生み出すエンジニア。遊び心が技術を高めます。',
+      'SLI-N': '【精緻なる時計師】SLI（職人）✕ ノーマライザー。自分の技術と生活空間を完璧にチューニングし、ノイズのない規則正しく美しい日々を愛するルーティンの神。職人芸の極致。',
+      'SLI-H': '【自然の調和者】SLI（職人）✕ ハーモナイザー。余計な干渉を嫌い、自然の流れや環境と完全に一体化して、無理のない省エネライフを満喫する自由人。猫のようなしなやかな生き方。',
+      'IEE-D': '【インフルエンサーの星】IEE（助言者）✕ ドミナント。その無限の好奇心と魅力で人々の才能を引き出し、ワクワクするような一大ムーブメントを巻き起こす発起人。周囲のポテンシャルを爆発させます。',
+      'IEE-C': '【虹色のトリックスター】IEE（助言者）✕ クリエイター。一つの場所にとどまらず、あらゆる可能性と人間関係の間を飛び回っては、面白おかしいカオスを撒き散らす妖精。予測不可能な楽しさがあります。',
+      'IEE-N': '【心のアナリスト】IEE（助言者）✕ ノーマライザー。溢れる直感を、人間の心理モデルや関係性の法則として体系化し、的確なアドバイスを与えるカウンセラー。鋭い洞察力で人を導きます。',
+      'IEE-H': '【共感の魔法使い】IEE（助言者）✕ ハーモナイザー。誰の心にもスッと入り込み、その人の持つユニークな可能性を優しく肯定して調和をもたらす癒やしの相談役。寄り添う力の天才です。',
     };
 
     const key = `${type}-${main}`;
     if (analyses[key]) return analyses[key];
     
-    // 16タイプ×4サブタイプ合成エンジンによる、不公平のない完全なプロファイリングコラム生成
+    // 見つからなかった場合のフォールバック（ここはほぼ呼ばれないはずだけど念のため残しとくね！）
     const TYPE_CORE_INFO: Record<string, { name: string, nickname: string, trait: string }> = {
       'LII': { name: 'LII (INTJ / 研究者 / 論理的組織型)', nickname: 'LII研究者', trait: 'Ti-Ne（内向論理・外向直感）を主軸とする知的構造の設計者' },
       'IEI': { name: 'IEI (INFP / 叙情家 / 直感的人間関係型)', nickname: 'IEI叙情家', trait: 'Ni-Fe（内向直感・外向感情）を主軸とする時間と心のさざ波の調律師' },
@@ -205,26 +256,22 @@ export default function ResultView({
 
     if (TYPE_CORE_INFO[coreType]) {
       const info = TYPE_CORE_INFO[coreType];
-      
       const subDescriptions: Record<string, string> = {
         'D': `【行動執行パラディン】${info.nickname} ✕ ドミナント（支配型）。本来宿る ${info.trait} に、テストで測定された支配気質（ドミナント:D）がダイレクトに上書き共振。他者を巻き込む強力な現実突破力を得ています。論理や倫理的信念をただ頭で考えるだけでなく、物理世界というマトリクスを力強く同期・切り開いて統括する、圧倒的カリスマを秘めたフロント・リーダーです！`,
         'C': `【カオスを遊ぶクリエイティブハッカー】${info.nickname} ✕ クリエイター（創造型）。本来宿る ${info.trait} に、テストで測定された創造型気質（クリエイター:C）がダイレクトに上書き共振。既存の規則やカレンダーの枠をハサミで切り刻み、自由で予測不能なお茶目さを生み出します。退屈をバイパス（Bypass）し、自らお遊びシステムや面白いユーモアをハードウェア上に実装する、天才的な仕掛け人モデルです！`,
         'N': `【一貫性の高精度デバッガー】${info.nickname} ✕ ノーマライザー（規範型）。本来宿る ${info.trait} に、テストで測定された規範型気質（ノーマライザー:N）がダイレクトに上書き共振。客観的真実、論理モデル、あるいは道徳的正しさの正確さを極限に高めています。日常に発生する抜け漏れや感情レベルのバグノイズを進んでパージ（デバッグ）し、美しく整然としたプログラムを完璧に構築・保守し続けます！`,
         'H': `【静寂のチル調和隠者】${info.nickname} ✕ ハーモナイザー（調和型）。本来宿る ${info.trait} に、テストで測定された調和型気質（ハーモナイザー:H）がダイレクトに上書き共振。外界の過負荷な感情ノイズを完全に消音（マフラー）し、水面のように穏やかな環境を受容します。時間の流れに優しく追従し、周囲の人々に適度な余白と深い安らぎをプレゼントする、非常に洗練されたマインド・バランサーです。`
       };
-
       if (subDescriptions[subType]) {
         return subDescriptions[subType];
       }
     }
 
-    // デフォルトフォールバック
     return `【複合共振モデル】${type}が紡ぐ固有の世界線に、測定サブタイプ『${RESULT_PROFILES[main as 'D'|'C'|'N'|'H'].name}』および第2気質『${RESULT_PROFILES[sub as 'D'|'C'|'N'|'H'].name}』が交差・検知されました。タイプ本来の魅力的な資質とサブタイプのユニークな気質が美しく響き合い、あなたならではの個性的な日常適応と、多次元的なアプローチをもたらします。`;
   };
 
   const totalPoints = score.D + score.C + score.N + score.H || 1;
 
-  // テーマごとの上品なアクセントカラー（黒枠は絶対使わない。ソフトに仕上げる）
   const themeAccentStyle: Record<'D'|'C'|'N'|'H', { ring: string; textBg: string; border: string; bg: string }> = {
     D: { ring: 'ring-indigo-100', textBg: 'bg-indigo-50 text-indigo-800', border: 'border-indigo-100', bg: 'bg-indigo-50/40' },
     C: { ring: 'ring-amber-100', textBg: 'bg-amber-50 text-amber-800', border: 'border-amber-100', bg: 'bg-amber-50/40' },
@@ -234,7 +281,6 @@ export default function ResultView({
 
   const accent = themeAccentStyle[mainTypeKey] || themeAccentStyle.N;
 
-  // PC幅(768px)で画像を保存するための共通レンダラー
   const renderReportCardContents = (isExport: boolean) => {
     return (
       <div 
@@ -242,10 +288,8 @@ export default function ResultView({
         className={`${isExport ? "w-[768px]" : "w-full"} paper-bg border border-stone-200 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col bg-[#fafaf9] ${isExport ? "gap-6 p-8" : "gap-6"}`}
         style={isExport ? { width: '768px', minWidth: '768px', maxWidth: '768px' } : undefined}
       >
-        {/* 水のカラー波紋デザイン */}
         <div className={`absolute -top-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-tr ${mainProfile.watercolor} opacity-15 blur-3xl pointer-events-none`}></div>
         
-        {/* ヘッダー */}
         <div className="flex justify-between items-start border-b border-stone-200/80 pb-4 select-none">
           <div>
             <span className="text-[9px] font-mono tracking-widest text-stone-400 block uppercase">DCNH Psychological Session</span>
@@ -256,11 +300,10 @@ export default function ResultView({
           </div>
           <div className="text-right font-mono">
             <span className="text-[8px] text-stone-400 block">SUBJECT NICKNAME</span>
-            <span className="text-sm font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded shadow-sm">{username || '被験者みつき'}</span>
+            <span className="text-sm font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded shadow-sm">{username || 'ゲスト被験者'}</span>
           </div>
         </div>
 
-        {/* 診断結果タイトルエリア (枠線を上品なトーンに変更) */}
         <div className={`rounded-2xl p-5 border ${accent.border} ${accent.bg} flex justify-between items-center gap-4 ${isExport ? "flex-row text-left" : "flex-col md:flex-row text-center md:text-left"}`}>
           <div className={`space-y-1.5 ${isExport ? "text-left" : "text-center md:text-left"}`}>
             <div className={`flex flex-wrap items-center gap-2 ${isExport ? "justify-start" : "justify-center md:justify-start"}`}>
@@ -287,7 +330,6 @@ export default function ResultView({
             </p>
           </div>
 
-          {/* サークルパラメータサマリー */}
           <div className="w-28 h-28 shrink-0 bg-white border border-stone-200 rounded-full p-4 flex flex-col items-center justify-center relative shadow-sm">
             <div className="absolute inset-1 border border-dashed border-stone-300 rounded-full animate-spin" style={{ animationDuration: '45s' }}></div>
             <div className="text-center font-mono">
@@ -300,14 +342,12 @@ export default function ResultView({
           </div>
         </div>
 
-        {/* 測定記述 */}
         <div className="bg-white/60 p-4 border border-stone-200/60 rounded-2xl">
           <p className="text-xs text-stone-700 leading-relaxed font-sans select-text">
             {mainProfile.description}
           </p>
         </div>
 
-        {/* 詳細ビジュアルゲージ */}
         <div className="bg-white/80 border border-stone-200 p-4 rounded-2xl space-y-3 shadow-inner select-none">
           <h3 className="text-[10px] font-bold text-stone-700 font-sans border-l-2 border-stone-400 pl-1.5 leading-none">
             📊 精神パラメータ個別強度（累積値）
@@ -339,7 +379,6 @@ export default function ResultView({
           </div>
         </div>
 
-        {/* 自認タイプ ✕ 測定DCNHの化学反応コラム */}
         <div className="bg-cyan-50/40 border border-cyan-100 rounded-2xl p-4 md:p-5 space-y-1.5">
           <h3 className="font-mono text-[10px] text-cyan-800 font-bold flex items-center gap-1.5 border-b border-cyan-100 pb-1">
             <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
@@ -350,7 +389,6 @@ export default function ResultView({
           </p>
         </div>
 
-        {/* 強み・弱み (マイルドなトーンに落とす) */}
         <div className={`grid grid-cols-1 gap-4 ${isExport ? "grid-cols-2" : "md:grid-cols-2"}`}>
           <div className="bg-stone-50 border border-stone-200/60 p-4 rounded-2xl text-left">
             <h4 className="text-[10px] font-bold text-stone-700 font-sans tracking-wide border-b border-stone-200 pb-1.5 mb-2 uppercase flex items-center gap-1 leading-none select-none">
@@ -382,7 +420,6 @@ export default function ResultView({
           </div>
         </div>
 
-        {/* 案内人からのフィードバックログ */}
         <div className="space-y-3 pt-2 text-left">
           <h3 className="font-bold text-[10px] text-stone-600 border-b border-stone-200 pb-1.5 flex items-center gap-1 select-none leading-none">
             <FileText className="w-3.5 h-3.5 text-stone-400" />
@@ -390,7 +427,6 @@ export default function ResultView({
           </h3>
 
           <div className="space-y-2.5">
-            {/* ダーリンちゃん */}
             <div className="flex gap-3 items-start bg-white border border-stone-200/60 p-3 rounded-xl relative shadow-xs">
               <span className="text-xl select-none shrink-0 pt-0.5">🥺</span>
               <div className="space-y-1">
@@ -403,7 +439,6 @@ export default function ResultView({
               </div>
             </div>
 
-            {/* LSI芋虫 */}
             <div className="flex gap-3 items-start bg-white border border-stone-200/60 p-3 rounded-xl relative shadow-xs">
               <span className="text-xl select-none shrink-0 pt-0.5">🐛</span>
               <div className="space-y-1">
@@ -416,7 +451,6 @@ export default function ResultView({
               </div>
             </div>
 
-            {/* ご褒美くん */}
             <div className="flex gap-3 items-start bg-white border border-stone-200/60 p-3 rounded-xl relative shadow-xs">
               <span className="text-xl select-none shrink-0 pt-0.5">🐷</span>
               <div className="space-y-1">
@@ -431,7 +465,6 @@ export default function ResultView({
           </div>
         </div>
 
-        {/* クリエイターロボットプレビュー（診断対象に特別表示） */}
         {assembledRobot && (
           <div className="bg-zinc-950 text-zinc-300 border border-zinc-800 rounded-2xl p-4 md:p-5 text-left relative overflow-hidden shadow-md">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
@@ -449,13 +482,10 @@ export default function ResultView({
             </div>
 
             <div className={`flex items-stretch gap-4 ${isExport ? "flex-row" : "flex-col sm:flex-row"}`}>
-              {/* 美しいアセンブルされたロボットそのものをSVG再現表示する！ */}
               <div className={`flex justify-center items-center bg-zinc-900/80 border border-zinc-850 p-2.5 rounded-xl h-24 w-24 shrink-0 shadow-inner ${isExport ? "mx-0" : "mx-auto sm:mx-0"}`}>
                 <svg viewBox="0 0 100 100" className="w-full h-full text-zinc-300">
-                  {/* 頭部（頭） */}
                   <rect x="35" y="20" width="30" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
                   
-                  {/* アイカメラ (頭部選択肢) */}
                   {(assembledRobot.headId === 'visor' || assembledRobot.head === 'visor' || assembledRobot.head.includes('バイザー') || assembledRobot.head.includes('visor')) && (
                     <line x1="38" y1="30" x2="62" y2="30" stroke="#f43f5e" strokeWidth="3" />
                   )}
@@ -470,13 +500,10 @@ export default function ResultView({
                     </>
                   )}
 
-                  {/* 首 */}
                   <rect x="47" y="40" width="6" height="6" fill="none" stroke="currentColor" strokeWidth="1" />
 
-                  {/* 胴体（コア選択肢ビジュアル） */}
                   <rect x="25" y="46" width="50" height="34" rx="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
                   
-                  {/* コア内部 */}
                   {(assembledRobot.coreId === 'quantum' || assembledRobot.core === 'quantum' || assembledRobot.core.includes('量子') || assembledRobot.core.includes('quantum')) && (
                     <>
                       <circle cx="50" cy="63" r="8" fill="none" stroke="#a855f7" strokeWidth="1" strokeDasharray="2,2" />
@@ -497,11 +524,9 @@ export default function ResultView({
                     </>
                   )}
 
-                  {/* 左アーム（固定アニマ） */}
                   <path d="M 25 55 L 12 55 L 12 68" fill="none" stroke="currentColor" strokeWidth="1" />
                   <circle cx="12" cy="68" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
 
-                  {/* 右アーム（選択肢アニマ） */}
                   {(assembledRobot.armId === 'cannon' || assembledRobot.arm === 'cannon' || assembledRobot.arm.includes('キャノン') || assembledRobot.arm.includes('cannon')) && (
                     <>
                       <path d="M 75 55 L 88 55" fill="none" stroke="currentColor" strokeWidth="1" />
@@ -523,7 +548,6 @@ export default function ResultView({
                     </>
                   )}
 
-                  {/* 脚部下盤 */}
                   <line x1="38" y1="80" x2="33" y2="92" stroke="currentColor" strokeWidth="1.5" />
                   <line x1="62" y1="80" x2="67" y2="92" stroke="currentColor" strokeWidth="1.5" />
                   <rect x="28" y="92" width="10" height="3" fill="currentColor" />
@@ -564,10 +588,8 @@ export default function ResultView({
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 font-sans">
       
-      {/* 画面表示用 */}
       {renderReportCardContents(false)}
 
-      {/* 画像エクスポート専用クローン（画面外配置：PC等倍768pxレイアウトでレンダリング） */}
       <div 
         style={{ 
           position: 'absolute', 
@@ -580,7 +602,6 @@ export default function ResultView({
         {renderReportCardContents(true)}
       </div>
 
-      {/* 診断デバッグ行動履歴 (画像保存用のカードコンテナから外側に配置することで、画像保存時には行動ログが含まれないようにする) */}
       {actionLogs.length > 0 && (
         <div className="space-y-2 text-left">
           <h3 className="font-bold text-[10px] text-stone-600 flex items-center justify-between ml-0.5 select-none leading-none">
@@ -609,9 +630,6 @@ export default function ResultView({
         </div>
       )}
 
-
-
-      {/* ボトムボタン (画像保存など印刷対象外) */}
       <div className="flex flex-col sm:flex-row justify-center items-center gap-3 border-t border-stone-200/80 pt-5 mt-2 select-none">
         <motion.button
           whileHover={{ scale: 1.02 }}
