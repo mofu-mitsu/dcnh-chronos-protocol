@@ -82,7 +82,7 @@ export default function ResultView({
   };
 
   const handleDownloadImage = async () => {
-    const element = document.getElementById('result-report-card');
+    const element = document.getElementById('result-report-card-export');
     if (!element) return;
     setExporting(true);
     try {
@@ -234,13 +234,13 @@ export default function ResultView({
 
   const accent = themeAccentStyle[mainTypeKey] || themeAccentStyle.N;
 
-  return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 font-sans">
-      
-      {/* 診断証本体（画像保存用） */}
+  // PC幅(768px)で画像を保存するための共通レンダラー
+  const renderReportCardContents = (isExport: boolean) => {
+    return (
       <div 
-        id="result-report-card" 
-        className="w-full paper-bg border border-stone-200 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col gap-6 bg-[#fafaf9]"
+        id={isExport ? "result-report-card-export" : "result-report-card"} 
+        className={`${isExport ? "w-[768px]" : "w-full"} paper-bg border border-stone-200 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col bg-[#fafaf9] ${isExport ? "gap-6 p-8" : "gap-6"}`}
+        style={isExport ? { width: '768px', minWidth: '768px', maxWidth: '768px' } : undefined}
       >
         {/* 水のカラー波紋デザイン */}
         <div className={`absolute -top-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-tr ${mainProfile.watercolor} opacity-15 blur-3xl pointer-events-none`}></div>
@@ -261,9 +261,9 @@ export default function ResultView({
         </div>
 
         {/* 診断結果タイトルエリア (枠線を上品なトーンに変更) */}
-        <div className={`rounded-2xl p-5 border ${accent.border} ${accent.bg} flex flex-col md:flex-row justify-between items-center gap-4`}>
-          <div className="space-y-1.5 text-center md:text-left">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+        <div className={`rounded-2xl p-5 border ${accent.border} ${accent.bg} flex justify-between items-center gap-4 ${isExport ? "flex-row text-left" : "flex-col md:flex-row text-center md:text-left"}`}>
+          <div className={`space-y-1.5 ${isExport ? "text-left" : "text-center md:text-left"}`}>
+            <div className={`flex flex-wrap items-center gap-2 ${isExport ? "justify-start" : "justify-center md:justify-start"}`}>
               <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-bold shadow-xs ${accent.textBg}`}>
                 Primary Subtype
               </span>
@@ -351,7 +351,7 @@ export default function ResultView({
         </div>
 
         {/* 強み・弱み (マイルドなトーンに落とす) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${isExport ? "grid-cols-2" : "md:grid-cols-2"}`}>
           <div className="bg-stone-50 border border-stone-200/60 p-4 rounded-2xl text-left">
             <h4 className="text-[10px] font-bold text-stone-700 font-sans tracking-wide border-b border-stone-200 pb-1.5 mb-2 uppercase flex items-center gap-1 leading-none select-none">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
@@ -448,9 +448,9 @@ export default function ResultView({
               </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch gap-4">
+            <div className={`flex items-stretch gap-4 ${isExport ? "flex-row" : "flex-col sm:flex-row"}`}>
               {/* 美しいアセンブルされたロボットそのものをSVG再現表示する！ */}
-              <div className="flex justify-center items-center bg-zinc-900/80 border border-zinc-850 p-2.5 rounded-xl h-24 w-24 shrink-0 mx-auto sm:mx-0 shadow-inner">
+              <div className={`flex justify-center items-center bg-zinc-900/80 border border-zinc-850 p-2.5 rounded-xl h-24 w-24 shrink-0 shadow-inner ${isExport ? "mx-0" : "mx-auto sm:mx-0"}`}>
                 <svg viewBox="0 0 100 100" className="w-full h-full text-zinc-300">
                   {/* 頭部（頭） */}
                   <rect x="35" y="20" width="30" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -532,7 +532,7 @@ export default function ResultView({
               </div>
 
               <div className="flex-1 flex flex-col justify-between gap-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className={`grid gap-3 ${isExport ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"}`}>
                   <div className="space-y-1 text-xs">
                     <div className="text-[7.5px] font-mono text-zinc-500 font-bold leading-none uppercase">
                       [SPECIFICATION] アセンブリ構成機体スペック
@@ -557,6 +557,27 @@ export default function ResultView({
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 font-sans">
+      
+      {/* 画面表示用 */}
+      {renderReportCardContents(false)}
+
+      {/* 画像エクスポート専用クローン（画面外配置：PC等倍768pxレイアウトでレンダリング） */}
+      <div 
+        style={{ 
+          position: 'absolute', 
+          left: '-9999px', 
+          top: '-9999px', 
+          width: '768px',
+          pointerEvents: 'none'
+        }}
+      >
+        {renderReportCardContents(true)}
       </div>
 
       {/* 診断デバッグ行動履歴 (画像保存用のカードコンテナから外側に配置することで、画像保存時には行動ログが含まれないようにする) */}
