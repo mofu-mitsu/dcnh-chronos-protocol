@@ -240,7 +240,7 @@ export default function CaterpillarLine({ question, onAnswer, onLogAction }: Cat
               <span className="text-[8px] bg-emerald-500 text-white font-mono px-1 rounded-full scale-90">ONLINE</span>
             </span>
             <span className="text-[9px] text-[#d4e1f5] font-mono leading-none">
-              思考中 | 僕の一人称は「僕」
+              思考中 | FVLE
             </span>
           </div>
         </div>
