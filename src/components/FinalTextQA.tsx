@@ -69,7 +69,7 @@ export default function FinalTextQA({ question, onAnswer, onLogAction }: FinalTe
           cScore += 2;
         }
 
-        onLogAction?.(`記述質問の回答：「${text.slice(0, 25)}${len > 25 ? '...' : ''}」(総文字数:${len}, 漢字数:${kanjiMatch.length}, ひらがな数:${hiraganaMatch.length})`);
+        onLogAction?.(`記述質問の回答：「${text}」(総文字数:${len}, 漢字数:${kanjiMatch.length}, ひらがな数:${hiraganaMatch.length})`);
       } else {
         // 空白で送信（沈黙プロトコル：調和 H +2）
         hScore += 2;
