@@ -30,7 +30,7 @@ export default function DarlingGigen({ question, onAnswer, onLogAction }: Darlin
   const [showOptions, setShowOptions] = useState(true);
   const [stampOpen, setStampOpen] = useState(false);
   const [rapidTapCount, setRapidTapCount] = useState(0);
-  const [tsuigekiCount, setTsuigekiCount] = useState(0); // 追撃のプレッシャー(Se値)向上バッファ
+  const [tsuigekiCount, setTsuigekiCount] = useState(0); // 放置によるスルースキル(H/N)向上バッファ
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
 
   // Fe緊急インターフェース用のステート
@@ -79,8 +79,8 @@ export default function DarlingGigen({ question, onAnswer, onLogAction }: Darlin
           timestamp: getNowTime(),
         };
         setMessages((prev) => [...prev, newMsg]);
-        setTsuigekiCount((prev) => prev + 1); // 追撃した分Seスコア（D）をブースト！
-        onLogAction?.('ダーリンちゃんの放置追撃LINEが発火した (プレッシャーSe/D+1)');
+        setTsuigekiCount((prev) => prev + 1); // 追撃した分、静観（H/N）のスコアを上げる
+        onLogAction?.('ダーリンちゃんの放置追撃LINEが発火した (静観スルー/H+2, N+1)');
       }
     }, 1000);
 
@@ -285,10 +285,9 @@ export default function DarlingGigen({ question, onAnswer, onLogAction }: Darlin
   const handleNext = () => {
     if (selectedOpt) {
       const finalScore = { ...selectedOpt.score };
-      // 放置追撃回数分だけ、被験者みつきのSe数値(D)を優位にブーストし、クリエイター（C：Se接続遊び心）も連動加算！
+      // 放置追撃回数分だけ、マイペースなスルースキル（内向的防衛・スルー）として、H（調和：静観）とN（規範：境界線）を加算！
       if (tsuigekiCount > 0) {
-        finalScore.D = (finalScore.D || 0) + (tsuigekiCount * 3);
-        finalScore.C = (finalScore.C || 0) + (tsuigekiCount * 2);
+        // 放置によるスコア加算は削除（読んでいる・考えているだけかもしれないため）
       }
       
       // Fe割り込みでのスコアボーナスをマージ！
@@ -297,7 +296,7 @@ export default function DarlingGigen({ question, onAnswer, onLogAction }: Darlin
       finalScore.N = (finalScore.N || 0) + (loveScoreBonus.N || 0);
       finalScore.H = (finalScore.H || 0) + (loveScoreBonus.H || 0);
 
-      onLogAction?.(`ダーリン最終解答完了: 追撃D+${tsuigekiCount * 3}/C+${tsuigekiCount * 2}, Feボーナス(${JSON.stringify(loveScoreBonus)})を統合完了`);
+      onLogAction?.(`ダーリン最終解答完了: 放置スルーH+${tsuigekiCount * 2}/N+${tsuigekiCount}, Feボーナス(${JSON.stringify(loveScoreBonus)})を統合完了`);
       onAnswer(finalScore);
     }
   };
