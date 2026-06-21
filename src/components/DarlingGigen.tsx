@@ -284,13 +284,21 @@ export default function DarlingGigen({ question, onAnswer, onLogAction }: Darlin
     if (selectedOpt) {
       const finalScore = { ...selectedOpt.score };
       
+      // ユーザー自らの追撃連打（Se/自発的アクション）によるスコアブースト
+      if (rapidTapCount > 0) {
+        const dBoost = Math.min(rapidTapCount, 15);
+        const cBoost = Math.min(Math.floor(rapidTapCount / 2), 10);
+        finalScore.D = (finalScore.D || 0) + dBoost;
+        finalScore.C = (finalScore.C || 0) + cBoost;
+      }
+
       // Fe割り込みでのスコアボーナスをマージ！
       finalScore.D = (finalScore.D || 0) + (loveScoreBonus.D || 0);
       finalScore.C = (finalScore.C || 0) + (loveScoreBonus.C || 0);
       finalScore.N = (finalScore.N || 0) + (loveScoreBonus.N || 0);
       finalScore.H = (finalScore.H || 0) + (loveScoreBonus.H || 0);
 
-      onLogAction?.(`ダーリン最終解答完了: Feボーナス(${JSON.stringify(loveScoreBonus)})を統合完了`);
+      onLogAction?.(`ダーリン最終解答完了: 自発連打ブーストD+${Math.min(rapidTapCount, 15)}/C+${Math.min(Math.floor(rapidTapCount / 2), 10)}, Feボーナス(${JSON.stringify(loveScoreBonus)})を統合完了`);
       onAnswer(finalScore);
     }
   };
